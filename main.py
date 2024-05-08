@@ -9,7 +9,7 @@ import os
 import model as Model
 
 
-def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
+def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
     transforms = torchvision.transforms.Compose(
         [
             # For MNIST
@@ -155,6 +155,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
         SAMPLE_ITERATION = 50
         for i in tqdm(range(SAMPLE_ITERATION), leave=False, desc="Generate"):
             x = torch.randn((batch_size, model.latent_channel)).to(device)
+            x.requires_grad = True
             x = model.decode(x).clip(0, 1)
 
             for j in range(batch_size):
