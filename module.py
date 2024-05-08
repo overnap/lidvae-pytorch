@@ -90,8 +90,8 @@ class ICNN(torch.nn.Module):
         self.W.append(PositiveLinear(hidden_channel, 1))
         self.A.append(torch.nn.Linear(hidden_channel, 1))
 
-        self.W = torch.nn.Sequential(self.W)
-        self.A = torch.nn.Sequential(self.A)
+        self.W = torch.nn.Sequential(*self.W)
+        self.A = torch.nn.Sequential(*self.A)
 
         # Note that actual layers are A_{0:num_layers}
         # We have (num_layers+1) layers; then z_{num_layers+1} in R^1
