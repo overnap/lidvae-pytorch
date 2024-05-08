@@ -162,6 +162,7 @@ class LIDVAE(VAE):
         hidden_channels=[32, 64, 128],
         icnn_channels=[512, 512],
         input_dim=28,
+        inverse_lipschitz=0.0,
         beta=1.0,
         is_log_mse=False,
         dataset=None,
@@ -170,7 +171,7 @@ class LIDVAE(VAE):
         LIDVAE with residual-conv encoder and Brenier map decoder, for image dataset.
         Decoder consists of 2 ICNN, so 2-length array is expected for hidden channels of ICNNs.
         See Wang et al. for details on Brenier map.
-        Beta and logMSE features are ready-to-use, but are disabled by default.
+        Inverse Lipschitz, Beta, and logMSE features are ready-to-use, but are disabled by default.
         """
         if len(icnn_channels) != 2:
             raise ValueError("2-length array was expected for `icnn_channels`")
@@ -189,6 +190,7 @@ class LIDVAE(VAE):
         super(VAE, self).__init__()
 
         self.latent_channel = latent_channel
+        self.il_factor = inverse_lipschitz / 2
         self.beta = beta
         self.is_log_mse = is_log_mse
 
@@ -252,13 +254,13 @@ class LIDVAE(VAE):
 
     def decode(self, input):
         # x is result of first ICNN
-        x = self.decoder[0](input)
+        x = self.decoder[0](input) + self.il_factor * input.pow(2).sum(1, keepdim=True)
         # x is result of brenier map
         x = torch.autograd.grad(x, [input], torch.ones_like(x))[0]
         # x is result of Beta (id mat)
         x = self.decoder[1](x)
         # y is result of second ICNN
-        y = self.decoder[2](x)
+        y = self.decoder[2](x) + self.il_factor * x.pow(2).sum(1, keepdim=True)
         # y is result of brenier map
         y = torch.autograd.grad(y, [x], torch.ones_like(y))[0]
 
