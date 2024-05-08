@@ -9,7 +9,7 @@ import os
 import model as Model
 
 
-def train_and_test(model: Model.VAE, epochs=50, batch_size=16, device="cuda"):
+def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
     transforms = torchvision.transforms.Compose(
         [
             # For MNIST
@@ -57,7 +57,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=16, device="cuda"):
     name += " beta=" + str(float(model.beta))
     name += " log=" + str(model.is_log_mse)
     if type(model).__name__ == "LIDVAE":
-        name += " li=" + str(float(model.il_factor))
+        name += " il=" + str(float(model.il_factor))
 
     writer = SummaryWriter(log_dir="runs/" + name)
     if not os.path.exists("./result/"):
@@ -184,6 +184,4 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=16, device="cuda"):
 
 
 if __name__ == "__main__":
-    train_and_test(Model.LIDVAE(is_log_mse=True))
-    train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=5.0))
-    train_and_test(Model.ConvVAE(is_log_mse=True))
+    train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=0.0))

@@ -64,6 +64,10 @@ class PositiveLinear(torch.nn.Module):
         super().__init__()
 
         self.param = torch.nn.Parameter(torch.Tensor(out_channel, in_channel))
+        # The original implementation uses xavier
+        # But here we follows the pytorch default
+        torch.nn.init.kaiming_uniform_(self.param, a=2.2360679775)  # a=sqrt(5)
+
         self.is_exp = is_exp
 
     def forward(self, input):
