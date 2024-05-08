@@ -94,7 +94,9 @@ class ICNN(torch.nn.Module):
         self.A = torch.nn.Sequential(*self.A)
 
         # Note that actual layers are A_{0:num_layers}
-        # We have (num_layers+1) layers; then z_{num_layers+1} in R^1
+        # We have (num_layers+1) layers;
+        # specifically, there are (num_layers) hidden layers and output layer
+        # Then z_{num_layers+1} is in R^1
         # This strange numbering follows the original implementation
         self.A0 = torch.nn.Linear(in_channel, hidden_channel)
 
