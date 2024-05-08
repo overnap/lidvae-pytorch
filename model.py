@@ -1,8 +1,8 @@
 import torch
-from module import *
+import module
 
 
-class VAE(torch.nn.Moduel):
+class VAE(torch.nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
 
@@ -23,7 +23,7 @@ class VanillaVAE(VAE):
 
     def __init__(
         self,
-        in_channel=3,
+        in_channel=1,
         latent_channel=32,
         hidden_channels=[32, 64, 128],
         input_dim=28,
@@ -67,8 +67,8 @@ class VanillaVAE(VAE):
         for channel in hidden_channels:
             self.encoder.append(
                 torch.nn.Sequential(
-                    ResidualBlock(last_channel, channel, 2),
-                    ResidualBlock(channel, channel, 1),
+                    module.ResidualBlock(last_channel, channel, 2),
+                    module.ResidualBlock(channel, channel, 1),
                 )
             )
             last_channel = channel
@@ -157,7 +157,7 @@ class LIDVAE(VAE):
 
     def __init__(
         self,
-        in_channel=3,
+        in_channel=1,
         latent_channel=32,
         hidden_channels=[32, 64, 128],
         icnn_channels=[512, 512],
@@ -208,8 +208,8 @@ class LIDVAE(VAE):
         for channel in hidden_channels:
             self.encoder.append(
                 torch.nn.Sequential(
-                    ResidualBlock(last_channel, channel, 2),
-                    ResidualBlock(channel, channel, 1),
+                    module.ResidualBlock(last_channel, channel, 2),
+                    module.ResidualBlock(channel, channel, 1),
                 )
             )
             last_channel = channel
@@ -229,7 +229,7 @@ class LIDVAE(VAE):
         self.decoder = []
 
         # First layer: ICNN in latent channel
-        self.decoder.append(ICNN(latent_channel, icnn_channels[0]))
+        self.decoder.append(module.ICNN(latent_channel, icnn_channels[0]))
 
         # In the original implmentation,
         # a trainable full-rank matrix is used as Beta via SVD (as in appendix)
@@ -239,7 +239,7 @@ class LIDVAE(VAE):
         )
 
         # Second and last layer: ICNN in data dimension
-        self.decoder.append(ICNN((input_dim**2) * in_channel, icnn_channels[1]))
+        self.decoder.append(module.ICNN((input_dim**2) * in_channel, icnn_channels[1]))
 
         # Unflatten to shape of image
         self.decoder.append(torch.nn.Unflatten(1, (in_channel, input_dim, input_dim)))
@@ -296,7 +296,7 @@ class ConvVAE(VAE):
 
     def __init__(
         self,
-        in_channel=3,
+        in_channel=1,
         latent_channel=32,
         hidden_channels=[32, 64, 128],
         input_dim=28,
@@ -340,8 +340,8 @@ class ConvVAE(VAE):
         for channel in hidden_channels:
             self.encoder.append(
                 torch.nn.Sequential(
-                    ResidualBlock(last_channel, channel, 2),
-                    ResidualBlock(channel, channel, 1),
+                    module.ResidualBlock(last_channel, channel, 2),
+                    module.ResidualBlock(channel, channel, 1),
                 )
             )
             last_channel = channel
@@ -369,7 +369,7 @@ class ConvVAE(VAE):
                 torch.nn.BatchNorm1d(last_channel * (fc_dim**2)),
                 torch.nn.LeakyReLU(),
                 torch.nn.Unflatten(1, (last_channel, fc_dim, fc_dim)),
-                ResidualBlock(last_channel, last_channel, 1),
+                module.ResidualBlock(last_channel, last_channel, 1),
             )
         )
 

@@ -3,5 +3,6 @@
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
     "python.languageServer": "Pylance",
-    "python.terminal.executeInFileDir": false
+    "python.terminal.executeInFileDir": false,
+    "python.analysis.typeCheckingMode": "off"
 }

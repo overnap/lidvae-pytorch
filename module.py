@@ -72,7 +72,7 @@ class PositiveLinear(torch.nn.Module):
         else:
             # IDK but the original implementation is like this!
             # So if you want it to be the same, set is_exp = False
-            return torch.nn.functional.linear(input, torch.max(self.param, 1e-2))
+            return torch.nn.functional.linear(input, self.param.clamp(min=1e-5))
 
 
 class ICNN(torch.nn.Module):
