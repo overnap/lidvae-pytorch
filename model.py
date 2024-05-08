@@ -190,7 +190,7 @@ class LIDVAE(VAE):
         super(VAE, self).__init__()
 
         self.latent_channel = latent_channel
-        self.il_factor = inverse_lipschitz / 2
+        self.il_factor = inverse_lipschitz / 2.0
         self.beta = beta
         self.is_log_mse = is_log_mse
 
@@ -234,8 +234,9 @@ class LIDVAE(VAE):
         # In the original implmentation,
         # a trainable full-rank matrix is used as Beta via SVD (as in appendix)
         # Here, we use an identity matrix for injective map (as in main text)
-        self.decoder.append(
-            torch.eye((input_dim**2) * in_channel, latent_channel, requires_grad=False)
+        self.register_buffer(
+            "B",
+            torch.eye((input_dim**2) * in_channel, latent_channel, requires_grad=False),
         )
 
         # Second and last layer: ICNN in data dimension
@@ -246,7 +247,7 @@ class LIDVAE(VAE):
 
         # Note that there is no range mapping!
         # Use Clip or Sigmoid if you want
-        self.decoder = torch.nn.ModuleList(*self.decoder)
+        self.decoder = torch.nn.ModuleList(self.decoder)
 
     def encode(self, input):
         ret = self.encoder(input)
@@ -256,15 +257,15 @@ class LIDVAE(VAE):
         # x is result of first ICNN
         x = self.decoder[0](input) + self.il_factor * input.pow(2).sum(1, keepdim=True)
         # x is result of brenier map
-        x = torch.autograd.grad(x, [input], torch.ones_like(x))[0]
+        x = torch.autograd.grad(x, [input], torch.ones_like(x), create_graph=True)[0]
         # x is result of Beta (id mat)
-        x = self.decoder[1](x)
+        x = torch.nn.functional.linear(x, self.B)
         # y is result of second ICNN
-        y = self.decoder[2](x) + self.il_factor * x.pow(2).sum(1, keepdim=True)
+        y = self.decoder[1](x) + self.il_factor * x.pow(2).sum(1, keepdim=True)
         # y is result of brenier map
-        y = torch.autograd.grad(y, [x], torch.ones_like(y))[0]
+        y = torch.autograd.grad(y, [x], torch.ones_like(y), create_graph=True)[0]
 
-        return self.decoder[3](y)
+        return self.decoder[2](y)
 
     def forward(self, input):
         mu, log_var = self.encode(input)

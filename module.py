@@ -71,8 +71,8 @@ class PositiveLinear(torch.nn.Module):
             return torch.nn.functional.linear(input, self.param.exp())
         else:
             # IDK but the original implementation is like this!
-            # So if you want it to be the same, set is_exp = False
-            return torch.nn.functional.linear(input, self.param.clamp(min=1e-5))
+            # So if you want it to be the same, set is_exp=False
+            return torch.nn.functional.linear(input, self.param.clamp(min=1e-2))
 
 
 class ICNN(torch.nn.Module):
@@ -88,7 +88,7 @@ class ICNN(torch.nn.Module):
             self.W.append(PositiveLinear(hidden_channel, hidden_channel))
             self.A.append(torch.nn.Linear(in_channel, hidden_channel))
         self.W.append(PositiveLinear(hidden_channel, 1))
-        self.A.append(torch.nn.Linear(hidden_channel, 1))
+        self.A.append(torch.nn.Linear(in_channel, 1))
 
         self.W = torch.nn.Sequential(*self.W)
         self.A = torch.nn.Sequential(*self.A)

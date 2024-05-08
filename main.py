@@ -9,7 +9,7 @@ import os
 import model as Model
 
 
-def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
+def train_and_test(model: Model.VAE, epochs=50, batch_size=16, device="cuda"):
     transforms = torchvision.transforms.Compose(
         [
             # For MNIST
@@ -53,11 +53,11 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
         optimizer, epochs * len(loader_train)
     )
 
-    name = type(model).__name__ + datetime.now().strftime(" %d %b - %H %M")
+    name = type(model).__name__ + datetime.now().strftime(" %m%d %H%M")
     name += " beta=" + str(float(model.beta))
     name += " log=" + str(model.is_log_mse)
     if type(model).__name__ == "LIDVAE":
-        name += " li=" + str(float(model.li_factor))
+        name += " li=" + str(float(model.il_factor))
 
     writer = SummaryWriter(log_dir="runs/" + name)
     if not os.path.exists("./result/"):
@@ -96,7 +96,9 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
         model.eval()
         loss_total = 0
 
-        with torch.no_grad():
+        # We cannot use no_grad, since LIDVAE requires calculation of gradient
+        # with torch.no_grad():
+        if True:
             # Validation loop
             for x, y in tqdm(loader_test, leave=False, desc="Evaluate"):
                 x = x.to(device)
@@ -110,6 +112,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
             for _ in tqdm(range(1), leave=False, desc="Test"):
                 x, _ = next(iter(loader_test))
                 x = x.to(device)
+                x.requires_grad = True
 
                 result = model(x)
                 save_image(
@@ -127,6 +130,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
 
                 # Save sampled example
                 x = torch.randn((x.shape[0], model.latent_channel)).to(device)
+                x.requires_grad = True
                 result = model.decode(x)
                 save_image(
                     result[:256].clip(0, 1),
@@ -142,7 +146,9 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
             )
 
     # Generate samples to calculate FID score
-    with torch.no_grad():
+    # We cannot use no_grad, since LIDVAE requires calculation of gradient
+    # with torch.no_grad():
+    if True:
         if not os.path.exists("./result/" + name + "/generation"):
             os.mkdir("./result/" + name + "/generation")
 
@@ -165,7 +171,19 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=1024, device="cuda"):
 
     writer.close()
 
+    try:
+        import pytorch_fid
+
+        fid = os.popen(
+            f'python -m pytorch_fid ./mnist/ "./result/{name}/generation/" --device cuda:0'
+        ).read()
+        print(fid)
+
+    except ModuleNotFoundError:
+        print("Please install `pytorch_fid` to show FID score")
+
 
 if __name__ == "__main__":
-    train_and_test(Model.VanillaVAE(is_log_mse=True))
     train_and_test(Model.LIDVAE(is_log_mse=True))
+    train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=5.0))
+    train_and_test(Model.ConvVAE(is_log_mse=True))
