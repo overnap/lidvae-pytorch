@@ -160,7 +160,7 @@ class LIDVAE(VAE):
         in_channel=1,
         latent_channel=32,
         hidden_channels=[32, 64, 128],
-        icnn_channels=[512, 1024],
+        icnn_channels=[512, 512],
         input_dim=28,
         inverse_lipschitz=0.0,
         beta=1.0,

@@ -182,7 +182,7 @@ def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
         import pytorch_fid
 
         fid = os.popen(
-            f'python -m pytorch_fid ./mnist/ "./result/{name}/generation/" --device cuda:0'
+            f'python -m pytorch_fid C:/fid/mnist/ "./result/{name}/generation/" --device cuda:0'
         ).read()
         print(fid)
 
