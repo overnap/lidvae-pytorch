@@ -48,7 +48,7 @@ def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
     )
 
     model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, epochs * len(loader_train)
     )
@@ -193,7 +193,7 @@ def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
 if __name__ == "__main__":
     train_and_test(Model.VanillaVAE(is_log_mse=True))
     train_and_test(Model.LIDVAE(is_log_mse=True))
-    train_and_test(Model.LIDVAE(is_log_mse=True, beta=10.0))  # Expected best FID
+    train_and_test(Model.LIDVAE(is_log_mse=True, beta=5.0))  # Expected best FID
     train_and_test(Model.LIDVAE(is_log_mse=False))
     train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=5.0))
     train_and_test(Model.ConvVAE(is_log_mse=True))
