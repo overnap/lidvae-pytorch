@@ -9,7 +9,7 @@ import os
 import model as Model
 
 
-def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
+def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
     transforms = torchvision.transforms.Compose(
         [
             # For MNIST
@@ -26,7 +26,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
 
     loader_train = DataLoader(
         torchvision.datasets.MNIST(root="C:/dataset/", transform=transforms),
-        # torchvision.datasets.CelebA(root="./dataset", transform=transforms),
+        # torchvision.datasets.CelebA(root="C:/dataset", transform=transforms),
         batch_size=batch_size,
         shuffle=True,
         num_workers=8,
@@ -111,8 +111,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
             # Save reconstruction example
             for _ in tqdm(range(1), leave=False, desc="Test"):
                 x, _ = next(iter(loader_test))
-                x = x.to(device)
-                x.requires_grad = True
+                x = x.requires_grad_(True).to(device)
 
                 result = model(x)
                 save_image(
@@ -129,8 +128,11 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
                 )
 
                 # Save sampled example
-                x = torch.randn((x.shape[0], model.latent_channel)).to(device)
-                x.requires_grad = True
+                x = (
+                    torch.randn((x.shape[0], model.latent_channel))
+                    .requires_grad_(True)
+                    .to(device)
+                )
                 result = model.decode(x)
                 save_image(
                     result[:256].clip(0, 1),
@@ -154,8 +156,11 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
 
         SAMPLE_ITERATION = 50
         for i in tqdm(range(SAMPLE_ITERATION), leave=False, desc="Generate"):
-            x = torch.randn((batch_size, model.latent_channel)).to(device)
-            x.requires_grad = True
+            x = (
+                torch.randn((batch_size, model.latent_channel))
+                .requires_grad_(True)
+                .to(device)
+            )
             x = model.decode(x).clip(0, 1)
 
             for j in range(batch_size):
@@ -172,6 +177,7 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
 
     writer.close()
 
+    # Calculate FID via `pytorch_fid` lib
     try:
         import pytorch_fid
 
@@ -185,4 +191,9 @@ def train_and_test(model: Model.VAE, epochs=50, batch_size=512, device="cuda"):
 
 
 if __name__ == "__main__":
-    train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=0.0))
+    train_and_test(Model.VanillaVAE(is_log_mse=True))
+    train_and_test(Model.LIDVAE(is_log_mse=True))
+    train_and_test(Model.LIDVAE(is_log_mse=True, beta=10.0))  # Expected best FID
+    train_and_test(Model.LIDVAE(is_log_mse=False))
+    train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=5.0))
+    train_and_test(Model.ConvVAE(is_log_mse=True))

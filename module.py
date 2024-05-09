@@ -16,12 +16,12 @@ class PlainConvolution(torch.nn.Module):
         self.conv2 = torch.nn.Sequential(
             torch.nn.Conv2d(out_channel, out_channel, 3, 1, 1),
             torch.nn.BatchNorm2d(out_channel),
+            self.activation,
         )
 
     def forward(self, input):
         output = self.conv1(input)
         output = self.conv2(output)
-        output = self.activation(output)
 
         return output
 
