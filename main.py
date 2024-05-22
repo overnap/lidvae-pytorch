@@ -9,12 +9,12 @@ import os
 import model as Model
 
 
-def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
+def train_and_test(model: Model.VAE, epochs=100, batch_size=128, device="cuda"):
     transforms = torchvision.transforms.Compose(
         [
             # For MNIST
-            torchvision.transforms.RandomRotation(20),
-            torchvision.transforms.RandomResizedCrop((28, 28), (0.9, 1), (0.9, 1.1)),
+            # torchvision.transforms.RandomRotation(20),
+            # torchvision.transforms.RandomResizedCrop((28, 28), (0.9, 1), (0.9, 1.1)),
             # For CelebA
             # torchvision.transforms.RandomHorizontalFlip(),
             # torchvision.transforms.CenterCrop(148),
@@ -60,10 +60,7 @@ def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
         name += " il=" + str(float(model.il_factor))
 
     writer = SummaryWriter(log_dir="runs/" + name)
-    if not os.path.exists("./result/"):
-        os.mkdir("./result/")
-    if not os.path.exists("./result/" + name):
-        os.mkdir("./result/" + name)
+    os.makedirs("./result/" + name, exist_ok=True)
 
     # Main loop
     for epoch in tqdm(range(epochs), desc=name):
@@ -151,8 +148,7 @@ def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
     # We cannot use no_grad, since LIDVAE requires calculation of gradient
     # with torch.no_grad():
     if True:
-        if not os.path.exists("./result/" + name + "/generation"):
-            os.mkdir("./result/" + name + "/generation")
+        os.makedirs("./result/" + name + "/generation", exist_ok=True)
 
         SAMPLE_ITERATION = 50
         for i in tqdm(range(SAMPLE_ITERATION), leave=False, desc="Generate"):
@@ -191,9 +187,12 @@ def train_and_test(model: Model.VAE, epochs=60, batch_size=128, device="cuda"):
 
 
 if __name__ == "__main__":
-    train_and_test(Model.VanillaVAE(is_log_mse=True))
-    train_and_test(Model.LIDVAE(is_log_mse=True))
-    train_and_test(Model.LIDVAE(is_log_mse=True, beta=5.0))  # Expected best FID
-    train_and_test(Model.LIDVAE(is_log_mse=False))
-    train_and_test(Model.LIDVAE(is_log_mse=True, inverse_lipschitz=5.0))
-    train_and_test(Model.ConvVAE(is_log_mse=True))
+    for _ in range(5):
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=1.0, inverse_lipschitz=0.5))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=3.0, inverse_lipschitz=0.5))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=5.0, inverse_lipschitz=0.5))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=8.0, inverse_lipschitz=0.5))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=1.0, inverse_lipschitz=0.3))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=3.0, inverse_lipschitz=0.3))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=5.0, inverse_lipschitz=0.3))
+        train_and_test(Model.LIDVAE(is_log_mse=True, beta=8.0, inverse_lipschitz=0.3))
